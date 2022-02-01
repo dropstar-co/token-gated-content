@@ -1,0 +1,46 @@
+version: '3.1'
+
+services:
+  token-gated-content-backend:
+    container_name: token-gated-content-backend
+    build:
+      context: ../token-gated-content-backend
+    ports:
+      - '${BACKEND_PORT}:${BACKEND_PORT}'
+    networks:
+      default:
+        ipv4_address: ${BACKEND_HOST}
+
+  token-gated-content-website:
+    container_name: token-gated-content-website
+    build:
+      context: ../token-gated-content-website
+    ports:
+      - '${WEBSITE_PORT}:${WEBSITE_PORT}'
+    networks:
+      default:
+        ipv4_address: ${WEBSITE_HOST}
+
+  db:
+    container_name: db
+    image: mdillon/postgis
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    expose:
+      - '${DB_PORT}'
+    ports:
+      - '${DB_PORT}:5432'
+    networks:
+      default:
+        ipv4_address: ${DB_HOST}
+    volumes:
+      - ${PWD}/postgis:/var/lib/mysql
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${NETWORK}

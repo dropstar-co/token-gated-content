@@ -1,0 +1,18 @@
+steps:
+
+  # Install dependencies
+  - name: node:12
+    entrypoint: yarn
+    args: [ install ]
+
+  # Build
+  - name: node:12
+    entrypoint: yarn
+    args: [ run, build ]
+
+  # Build image
+  - name: gcr.io/cloud-builders/docker
+    args: [ build, -t, eu.gcr.io/$PROJECT_ID/$REPO_NAME:$_DOCKER_TAG, ., -f, releng/Dockerfile ]
+
+images:
+  - eu.gcr.io/$PROJECT_ID/$REPO_NAME:$_DOCKER_TAG

@@ -1,0 +1,91 @@
+{
+	"swagger": "2.0",
+	"info": {
+		"description": "Token gated content for venly wallets",
+		"version": "1.0.0",
+		"title": "TokenGatedContent-Venly"
+	},
+	"host": "localhost:8000",
+	"schemes": ["http"],
+	"paths": {
+		"/status": {
+			"get": {
+				"tags": ["health"],
+				"description": "Check that the backend is running",
+				"summary": "",
+				"consumes": ["application/json"],
+				"produces": ["application/json"],
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string",
+									"example": "ok"
+								},
+								"message": {
+									"type": "string",
+									"example": "I am great!"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/generatemessage": {
+			"get": {
+				"tags": ["hash", "message", "signature"],
+				"description": "Generates the message that is to be signed by the user to perform the authentication challenge",
+				"consumes": ["application/json"],
+				"produces": ["application/json"],
+				"parameters": [
+					{
+						"in": "body",
+						"name": "body",
+						"description": "Data of the wallet and erc1155 needed to generate the message",
+						"required": true,
+						"schema": {
+							"type": "object",
+							"properties": {
+								"address": {
+									"type": "string",
+									"example": "0xe96decb942b8b5c6bd57f08f146fca12772cb1ef"
+								},
+								"tokenAddress": {
+									"type": "string",
+									"example": "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d"
+								},
+								"tokenId": {
+									"type": "string",
+									"example": "176"
+								}
+							}
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"schema": {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string",
+									"example": "ok"
+								},
+								"data": {
+									"type": "string",
+									"example": ""
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
