@@ -3,24 +3,38 @@ import './App.css'
 import { Button } from 'react-bootstrap'
 import React, { useState, useEffect } from 'react'
 
-import fetch from 'node-fetch'
-
 async function signAndSend() {
 	console.log('AAA')
 }
 
 function App() {
 	const [count, setCount] = useState(0)
+	const [data, setDate] = useState('')
 
-	useEffect(() => {
+	function init() {}
+
+	function updateCounter() {
 		// Update the document title using the browser API
 		document.title = `You clicked ${count} times`
-	})
+	}
+
+	async function updateData() {
+		const response = await fetch('http://localhost:8000/status')
+		const json = await response.json()
+		console.log({ json })
+	}
+
+	useEffect(init, [])
+	useEffect(updateCounter, [count])
+	useEffect(updateData, [count])
 
 	return (
 		<div>
 			<p>You clicked {count} times</p>
 			<button onClick={() => setCount(count + 1)}>Click me</button>
+
+			<p>data</p>
+			<p>{data}</p>
 		</div>
 	)
 
