@@ -74,31 +74,6 @@ function App() {
 			<p>{data}</p>
 		</div>
 	)
-
-	return (
-		<div className="App">
-			<header className="App-header">
-				<img src={logo} className="App-logo" alt="logo" />
-				<p>
-					Edit <code>src/App.js</code> and save to reload.
-				</p>
-
-				<p>
-					<Button variant="danger" onClick={signAndSend}>
-						Danger
-					</Button>{' '}
-					<Button variant="info">Info</Button>{' '}
-				</p>
-				<a
-					className="App-link"
-					href="https://reactjs.org"
-					target="_blank"
-					rel="noopener noreferrer">
-					Learn React
-				</a>
-			</header>
-		</div>
-	)
 }
 
 export default App
