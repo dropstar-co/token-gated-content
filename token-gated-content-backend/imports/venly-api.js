@@ -14,7 +14,7 @@ const signaturesURL = 'https://api-staging.arkane.network/api/signatures'
 let token = undefined
 
 async function getToken() {
-	if (token) return
+	if (token) return token
 
 	const body = (
 		await new URLSearchParams({

@@ -6,7 +6,7 @@ const { asyncFlatMap } = require('./async-flat-map')
 
 const { ethers } = require('ethers')
 
-const { getSignature } = require('./venly-api')
+const { getSignature, getToken } = require('./venly-api')
 const { getERC1155At } = require('./web3')
 
 const SIGNATURE_TIMESPAN = parseInt(process.env.SIGNATURE_TIMESPAN)
@@ -61,6 +61,18 @@ module.exports = class Endpoints {
 			async function (_req, res) {
 				safe(res, async () => {
 					res.status(200).send({ status: 'ok', message: 'I am great!' })
+				})
+			}.bind(this),
+		)
+		app.get(
+			'/bearertokenprovider',
+			async function (_req, res) {
+				safe(res, async () => {
+					console.log('Called bearertokenprovider')
+					const token = await getToken()
+
+					console.log({ token })
+					await res.status(200).send({ status: 'ok', token })
 				})
 			}.bind(this),
 		)
