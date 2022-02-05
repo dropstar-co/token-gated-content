@@ -1,77 +1,92 @@
-'use strict'
-
-import logo from './logo.svg'
 import './App.css'
 import { Button } from 'react-bootstrap'
 import React, { useState, useEffect } from 'react'
 
+import {
+	VENLY_WIDGET_CLIENT_ID,
+	TOKEN_GATED_CONTENT_BACKEND_URL,
+	VENLY_CHAIN,
+	VENLY_ENVIRONMENT,
+} from './config'
+
 import { VenlyConnect } from '@venly/connect'
+const venlyConnect = new VenlyConnect(VENLY_WIDGET_CLIENT_ID, { environment: VENLY_ENVIRONMENT })
 
-import { VENLY_API_CLIENT_ID, TOKEN_GATED_CONTENT_BACKEND_URL } from './config'
+async function checkAuthenticated() {
+	const result = await venlyConnect.checkAuthenticated()
+	result.authenticated(async function (auth) {
+		const wallets = await venlyConnect.api.getWallets({ secretType: VENLY_CHAIN })
+		postAuth(auth, wallets)
+	})
+}
 
-async function signAndSend() {
-	console.log('AAA')
+async function connect(venlyConnect) {
+	try {
+		const account = await venlyConnect.flows.getAccount(VENLY_CHAIN)
+		console.log(account)
+		postAuth(account.auth, account.wallets)
+	} catch (error) {
+		console.log(error)
+	}
+}
+
+function postAuth(auth, wallets) {
+	console.log(auth.token)
+	hideLoginButton()
+	showUsername(auth)
+	showWallets(wallets)
+}
+
+function hideLoginButton() {
+	const button = document.querySelector('#connect')
+	button.value = 'Already connected'
+	button.disabled = true
+}
+
+function showUsername(auth) {
+	const userName = document.querySelector('#user')
+	userName.textContent = auth.idTokenParsed.nickname
+}
+
+function showWallets(wallets) {
+	const ul = document.createElement('ul')
+	for (const wallet of wallets) {
+		const li = document.createElement('li')
+		li.innerText = `${wallet.description} - ${wallet.address} `
+		ul.appendChild(li)
+	}
+	const body = document.querySelector('body')
+	body.appendChild(ul)
 }
 
 function App() {
-	const [count, setCount] = useState(0)
-	const [data, setDate] = useState('')
-	const [profile, setProfile] = useState({})
+	//const [count, setCount] = useState(0)
+	const [data, setData] = useState('')
 
-	function init() {}
-
-	function updateCounter() {
-		// Update the document title using the browser API
-		document.title = `You clicked ${count} times`
+	function init() {
+		checkAuthenticated()
 	}
 
-	async function updateData() {
-		const response = await fetch(`${TOKEN_GATED_CONTENT_BACKEND_URL}/status`)
-		const json = await response.json()
-		console.log({ json })
+	function updateData() {
+		async function asyncFetchData() {
+			const response = await fetch(`${TOKEN_GATED_CONTENT_BACKEND_URL}/status`)
+			const json = await response.json()
+			console.log({ json })
+			setData(json.data)
+		}
+		asyncFetchData()
 	}
 
 	useEffect(init, [])
-	useEffect(updateCounter, [count])
-	useEffect(updateData, [count])
 
 	return (
 		<div>
-			<p>You clicked {count} times</p>
 			<p>
-				<button onClick={() => setCount(count + 1)}>Click me</button>
+				<Button id="connect" onClick={() => connect(venlyConnect)}>
+					Do magic
+				</Button>
 			</p>
-
-			<p>
-				<button
-					onClick={async () => {
-						const venlyConnect = new VenlyConnect('Testaccount-capsule', {
-							environment: 'production',
-							bearerTokenProvider: async () => {
-								const resultBearerTokenProvider = await fetch(
-									`${TOKEN_GATED_CONTENT_BACKEND_URL}/bearertokenprovider`,
-								)
-								const json = await resultBearerTokenProvider.json()
-								const { access_token } = json.token
-								console.log({ access_token })
-								return json.access_token
-							},
-						})
-
-						console.log({ venlyConnect })
-						const profile = await venlyConnect.api.getProfile()
-
-						console.log(profile)
-						console.log({ profile })
-
-						setProfile(profile)
-					}}>
-					venlyConnect.api.getProfile()
-				</button>
-			</p>
-
-			<p>data</p>
-			<p>{data}</p>
+			<p>{JSON.stringify(data, null, 2)}</p>
 		</div>
 	)
 }
