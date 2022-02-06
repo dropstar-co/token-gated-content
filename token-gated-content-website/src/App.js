@@ -12,14 +12,6 @@ import {
 import { VenlyConnect } from '@venly/connect'
 const venlyConnect = new VenlyConnect(VENLY_WIDGET_CLIENT_ID, { environment: VENLY_ENVIRONMENT })
 
-async function checkAuthenticated() {
-	const result = await venlyConnect.checkAuthenticated()
-	result.authenticated(async function (auth) {
-		const wallets = await venlyConnect.api.getWallets({ secretType: VENLY_CHAIN })
-		postAuth(auth, wallets)
-	})
-}
-
 async function connect(venlyConnect) {
 	try {
 		const account = await venlyConnect.flows.getAccount(VENLY_CHAIN)
@@ -62,6 +54,20 @@ function showWallets(wallets) {
 function App() {
 	//const [count, setCount] = useState(0)
 	const [data, setData] = useState('')
+	const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+	async function checkAuthenticated() {
+		const result = await venlyConnect.checkAuthenticated()
+		result.authenticated(async function (auth) {
+			const wallets = await venlyConnect.api.getWallets({ secretType: VENLY_CHAIN })
+			postAuth(auth, wallets)
+			setIsAuthenticated(true)
+		})
+	}
+
+	async function loadNFTs() {
+		const result = await fetch(TOKEN_GATED_CONTENT_BACKEND_URL + '/nonfungibles')
+	}
 
 	function init() {
 		checkAuthenticated()
@@ -78,6 +84,7 @@ function App() {
 	}
 
 	useEffect(init, [])
+	useEffect(() => loadNFTs(), [isAuthenticated])
 
 	return (
 		<div>
@@ -87,6 +94,7 @@ function App() {
 				</Button>
 			</p>
 			<p>{JSON.stringify(data, null, 2)}</p>
+			<p>{isAuthenticated ? 'Authenticated' : 'Not authenticated'}</p>
 		</div>
 	)
 }
