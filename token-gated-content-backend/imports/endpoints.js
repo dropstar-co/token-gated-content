@@ -158,26 +158,34 @@ module.exports = class Endpoints {
 						logging: false,
 						where: { tokenAddress, tokenId },
 					})
+					const tokenGatedContentRow = this.TokenGatedContent.build({ id: results[0].id })
+					await tokenGatedContentRow.reload()
 
-					if (results.length === 0) {
+					if (results.length === 0)
 						errorResponse(res, `No gated content for ${tokenAddress}, ${tokenId}`)
-						return
-					}
+					else if (results.length < 1)
+						errorResponse(res, `Multiple content for ${tokenAddress}, ${tokenId}`)
+
+					if (results.length !== 1) return
 
 					const erc1155 = getERC1155At(dataObject.tokenAddress)
 					const balance = (
 						await erc1155.balanceOf(address, parseInt(dataObject.tokenId))
 					).toString()
 
-					if (balance < sqlRow.balanceRequired) {
-						errorResponse(
-							res,
-							`You do not have enought tokens to access this content (${balance}<${balanceRequired})`,
-						)
-						return
-					}
+					console.log(JSON.stringify({ results }, null, 2))
 
-					res.status(200).download(sqlRow.contentRoute, sqlRow.contentName)
+					console.log('Checking balance required')
+					console.log(`${balance} < ${tokenGatedContentRow.balanceRequired}`)
+					if (balance < tokenGatedContentRow.balanceRequired)
+						res.status(403).send({
+							status: 'nok',
+							message: `You do not have enought tokens to access this content (${balance}<${tokenGatedContentRow.balanceRequired})`,
+						})
+					else
+						res
+							.status(200)
+							.download(tokenGatedContentRow.contentRoute, tokenGatedContentRow.contentName)
 				})
 			}.bind(this),
 		)
@@ -199,6 +207,7 @@ module.exports = class Endpoints {
 	}
 
 	async errorResponse(res, message) {
+		console.log(message)
 		res.status(400).send({ status: 'nok', message })
 	}
 }
