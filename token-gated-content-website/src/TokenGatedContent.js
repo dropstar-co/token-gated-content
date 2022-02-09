@@ -81,19 +81,22 @@ function TokenGatedContent() {
 	function updateData() {
 		async function asyncFetchData() {
 			if (venlyWallets.length === 0) return
-			const body = JSON.stringify({ address: venlyWallets[0].address, tokenAddress, tokenId })
-			const generateMessageURL = `${TOKEN_GATED_CONTENT_BACKEND_URL}/generatemessage`
-			const headers = { 'Content-Type': 'application/json' }
-			const response = await fetch(generateMessageURL, { method: 'POST', headers, body })
+			let generateMessageResponse
+			{
+				const body = JSON.stringify({ address: venlyWallets[0].address, tokenAddress, tokenId })
+				const url = `${TOKEN_GATED_CONTENT_BACKEND_URL}/generatemessage`
+				const headers = { 'Content-Type': 'application/json' }
+				generateMessageResponse = await fetch(url, { method: 'POST', headers, body })
+			}
 
-			if (response.status === 200) console.log('Request ok')
-			else if (response.status === 400) console.log('Bad request')
-			else if (response.status === 404) console.log('No token gated content here')
-			else console.log(`other error ${response.status}`)
+			if (generateMessageResponse.status === 200) console.log('Request ok')
+			else if (generateMessageResponse.status === 400) console.log('Bad request')
+			else if (generateMessageResponse.status === 404) console.log('No token gated content here')
+			else console.log(`other error ${generateMessageResponse.status}`)
 
-			if (response.status !== 200) return
+			if (generateMessageResponse.status !== 200) return
 
-			const json = await response.json()
+			const json = await generateMessageResponse.json()
 
 			const { data } = json
 			setData(data)
@@ -110,8 +113,36 @@ function TokenGatedContent() {
 
 			if (resultSignMessage.status !== 'SUCCESS') return
 
+			const { signature } = resultSignMessage.result
+
 			console.log('setting signature')
-			console.log(resultSignMessage.result.signature)
+			console.log(signature)
+
+			let gatedcontentResponse
+			{
+				const body = JSON.stringify({ address: venlyWallets[0].address, signature, data })
+				const url = `${TOKEN_GATED_CONTENT_BACKEND_URL}/gatedcontent`
+				const headers = { 'Content-Type': 'application/json' }
+				gatedcontentResponse = await fetch(url, { method: 'POST', headers, body })
+				console.log({ gatedcontentResponse })
+			}
+
+			if (gatedcontentResponse.status === 200) console.log('Content is being served')
+			else if (gatedcontentResponse.status === 403) console.log('You have not enough tokens')
+			else console.log(`Other error happened ${gatedcontentResponse.status}`)
+
+			const imageBlob = await gatedcontentResponse.blob()
+			/*
+			const reader = new FileReader()
+			reader.readAsDataURL(imageBlob)
+			reader.onloadend = () => {
+				const base64data = reader.result
+				console.log(base64data)
+			}
+			*/
+
+			const imageDisplay = document.querySelector('#content')
+			imageDisplay.src = URL.createObjectURL(imageBlob)
 		}
 		asyncFetchData()
 	}
@@ -130,6 +161,10 @@ function TokenGatedContent() {
 				</Button>
 			</p>
 			<div id="data">{data}</div>
+			<img
+				id="content"
+				src="https://www.publicdomainpictures.net/pictures/280000/velka/not-found-image-15383864787lu.jpg"
+			/>
 		</div>
 	)
 }
