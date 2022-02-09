@@ -26,8 +26,6 @@ function TokenGatedContent() {
 
 	const isAddress = ethers.utils.isAddress(tokenAddress)
 
-	console.log(`${tokenAddress} / ${tokenId} --> ${isAddress}`)
-
 	async function checkAuthenticated() {
 		const result = await venlyConnect.checkAuthenticated()
 		result.authenticated(async function (auth) {
@@ -35,7 +33,6 @@ function TokenGatedContent() {
 			postAuth(auth, wallets)
 			setIsAuthenticated(true)
 			setVenlyWallets(wallets)
-			console.log({ wallets, auth })
 		})
 	}
 
@@ -54,8 +51,6 @@ function TokenGatedContent() {
 	}
 
 	function postAuth(auth, wallets) {
-		//console.log(auth.token)
-		//console.log({ wallets })
 		hideLoginButton()
 		showUsername(auth)
 		showWallets(wallets)
@@ -69,9 +64,6 @@ function TokenGatedContent() {
 
 	function showUsername(auth) {
 		const userName = document.querySelector('#user')
-		console.log('auth.idTokenParsed.nickname')
-		console.log({ auth })
-		console.log(auth.idTokenParsed.nickname)
 		userName.textContent = auth.idTokenParsed.nickname
 	}
 
@@ -79,7 +71,7 @@ function TokenGatedContent() {
 		const ul = document.createElement('ul')
 		for (const wallet of wallets) {
 			const li = document.createElement('li')
-			li.innerText = `${wallet.description} - ${wallet.address} `
+			li.innerText = `${wallet.description} - ${wallet.address}`
 			ul.appendChild(li)
 		}
 		const body = document.querySelector('body')
@@ -88,13 +80,13 @@ function TokenGatedContent() {
 
 	function updateData() {
 		async function asyncFetchData() {
-			const response = await fetch(`${TOKEN_GATED_CONTENT_BACKEND_URL}/generatemessage`, {
-				method: 'POST',
-				body: JSON.stringify({ address: '', tokenAddress, tokenId }),
-			})
+			if (venlyWallets.length === 0) return
+			const body = JSON.stringify({ address: venlyWallets[0].address, tokenAddress, tokenId })
+			const generateMessageURL = `${TOKEN_GATED_CONTENT_BACKEND_URL}/generatemessage`
+			const headers = { 'Content-Type': 'application/json' }
+			const response = await fetch(generateMessageURL, { method: 'POST', headers, body })
 			const json = await response.json()
 			console.log({ json })
-
 			setHasTokenGatedContent(response.status === 200)
 			setData(json.data)
 		}
@@ -104,29 +96,16 @@ function TokenGatedContent() {
 	useEffect(init, [])
 	useEffect(() => {
 		if (isAuthenticated) updateData()
-	}, [isAuthenticated])
+	}, [isAuthenticated, venlyWallets])
 
 	return (
 		<div>
 			<div id="user">Log in to see your user name</div>
-			{!isAuthenticated ? (
-				<p>
-					<Button id="connect" onClick={() => connect(venlyConnect)}>
-						Do magic
-					</Button>
-				</p>
-			) : (
-				''
-			)}
-
-			{hasTokenGatedContent ? (
-				<h1>TokenGatedContent</h1>
-			) : (
-				<h1>404 no token gated content for this token</h1>
-			)}
-
-			<p>{JSON.stringify(data, null, 2)}</p>
-			<p>{isAuthenticated ? 'Authenticated' : 'Not authenticated'}</p>
+			<p>
+				<Button id="connect" onClick={() => connect(venlyConnect)}>
+					Connect Venly Wallet
+				</Button>
+			</p>
 		</div>
 	)
 }
