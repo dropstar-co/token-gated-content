@@ -90,7 +90,19 @@ module.exports = class Endpoints {
 					const utcUnixTimestamp = Math.floor(new Date().getTime() / 1000)
 					const data = `Date: ${utcUnixTimestamp}\nAddress: ${address}\ntokenAddress: ${tokenAddress}\ntokenId: ${tokenId}\nI am the owner of ${address} and I want to check the token gated content for tokenAddress ${tokenAddress} and tokenId ${tokenId}`
 
-					res.status(200).send({ status: 'ok', data })
+					const generatemessageFindAllResult = await this.TokenGatedContent.findAll({
+						logging: false,
+						where: { tokenAddress, tokenId },
+					})
+					if (generatemessageFindAllResult.length === 0) {
+						const message = `No token gated content for ${tokenAddress}/${tokenId}`
+						res.status(404).send({
+							status: 'nok',
+							message,
+						})
+					} else {
+						res.status(200).send({ status: 'ok', data })
+					}
 				})
 			}.bind(this),
 		)

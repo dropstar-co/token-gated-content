@@ -18,8 +18,8 @@ const venlyConnect = new VenlyConnect(VENLY_WIDGET_CLIENT_ID, { environment: VEN
 function TokenGatedContent() {
 	const [data, setData] = useState('')
 	const [isAuthenticated, setIsAuthenticated] = useState(false)
-	const [hasTokenGatedContent, setHasTokenGatedContent] = useState(false)
 	const [venlyWallets, setVenlyWallets] = useState([])
+	const [venlyAuth, setVenlyAuth] = useState({})
 	const params = useParams()
 
 	const { tokenAddress, tokenId } = params
@@ -85,10 +85,33 @@ function TokenGatedContent() {
 			const generateMessageURL = `${TOKEN_GATED_CONTENT_BACKEND_URL}/generatemessage`
 			const headers = { 'Content-Type': 'application/json' }
 			const response = await fetch(generateMessageURL, { method: 'POST', headers, body })
+
+			if (response.status === 200) console.log('Request ok')
+			else if (response.status === 400) console.log('Bad request')
+			else if (response.status === 404) console.log('No token gated content here')
+			else console.log(`other error ${response.status}`)
+
+			if (response.status !== 200) return
+
 			const json = await response.json()
-			console.log({ json })
-			setHasTokenGatedContent(response.status === 200)
-			setData(json.data)
+
+			const { data } = json
+			setData(data)
+			const walletId = venlyWallets[0].id
+			const { secretType } = venlyWallets[0]
+
+			const resultSignMessage = await venlyConnect.createSigner().signMessage({
+				walletId,
+				secretType,
+				data,
+			})
+
+			console.log(JSON.stringify({ resultSignMessage }, null, 2))
+
+			if (resultSignMessage.status !== 'SUCCESS') return
+
+			console.log('setting signature')
+			console.log(resultSignMessage.result.signature)
 		}
 		asyncFetchData()
 	}
@@ -106,6 +129,7 @@ function TokenGatedContent() {
 					Connect Venly Wallet
 				</Button>
 			</p>
+			<div id="data">{data}</div>
 		</div>
 	)
 }
