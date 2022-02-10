@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import './index.css'
 import App from './App'
 import TokenGatedContent from './TokenGatedContent'
+import Admin from './Admin'
 
 import reportWebVitals from './reportWebVitals'
 
@@ -14,6 +15,7 @@ ReactDOM.render(
 			<Routes>
 				<Route path="/" element={<App />} />
 				<Route path="tokengatedcontent/:tokenAddress/:tokenId" element={<TokenGatedContent />} />
+				<Route path="admin/" element={<Admin />} />
 			</Routes>
 		</Router>
 	</React.StrictMode>,
