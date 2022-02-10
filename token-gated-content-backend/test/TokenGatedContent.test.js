@@ -28,7 +28,9 @@ async function prepareTestingEnvironment() {
 	await waitForAPIready()
 }
 
-async function cleanTestingEnvironment() {}
+async function cleanTestingEnvironment() {
+	await chai.request(app).delete('/tokengatedcontent/delete')
+}
 
 describe('Check endpoints of TokenGatedContent', async function () {
 	before(prepareTestingEnvironment)
@@ -40,7 +42,7 @@ describe('Check endpoints of TokenGatedContent', async function () {
 		this.timeout(TEST_TIMEOUT)
 		await chai
 			.request(app)
-			.get('/tokengatedcontents')
+			.get('/tokengatedcontents/read')
 			.then(function (res) {
 				res.status.should.be.equals(200)
 			})
@@ -50,7 +52,7 @@ describe('Check endpoints of TokenGatedContent', async function () {
 		this.timeout(TEST_TIMEOUT)
 		await chai
 			.request(app)
-			.get('/tokengatedcontent')
+			.get('/tokengatedcontent/read')
 			.query({ tokenAddress: 'A', tokenId: '0' })
 			.then(function (res) {
 				res.status.should.be.equals(200)
@@ -58,27 +60,50 @@ describe('Check endpoints of TokenGatedContent', async function () {
 			})
 	})
 
-	it('should have a method for getting one token gated content link', async function () {
+	it('should have a method for creating token gated content link', async function () {
 		this.timeout(TEST_TIMEOUT)
 		await chai
 			.request(app)
-			.get('/tokengatedcontent')
-			.query({ tokenAddress: 'A', tokenId: '0' })
+			.post('/tokengatedcontent/create')
+			.send({
+				tokenAddress: 'test',
+				tokenId: 'test',
+				balanceRequired: 'test',
+				contentRoute: 'test',
+				contentName: 'test',
+			})
 			.then(function (res) {
 				res.status.should.be.equals(200)
-				res.body.length.should.be.equals(0)
+
+				res.body.status.should.equal('ok')
+				res.body.createdInstance.should.have.property('tokenAddress')
+				res.body.createdInstance.should.have.property('tokenId')
+				res.body.createdInstance.should.have.property('balanceRequired')
+				res.body.createdInstance.should.have.property('contentRoute')
+				res.body.createdInstance.should.have.property('contentName')
 			})
 	})
 
-	it('should have a method for getting one token gated content link', async function () {
+	it('should have a method for getting one token gated content link with an existing instance', async function () {
 		this.timeout(TEST_TIMEOUT)
 		await chai
 			.request(app)
-			.get('/tokengatedcontent')
+			.get('/tokengatedcontent/read')
 			.query({ tokenAddress: TEST_TOKEN_ADDRESS, tokenId: TEST_TOKEN_ID })
 			.then(function (res) {
 				res.status.should.be.equals(200)
 				res.body.length.should.be.equals(1)
+			})
+	})
+
+	it('cleans testing instances', async function () {
+		this.timeout(TEST_TIMEOUT)
+		await chai
+			.request(app)
+			.delete('/tokengatedcontent/deletetest')
+			.then(function (res) {
+				res.status.should.be.equals(200)
+				const { body } = res
 			})
 	})
 })

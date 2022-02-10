@@ -4,7 +4,7 @@ const fs = require('fs')
 const fetch = require('node-fetch')
 const FormData = require('form-data')
 
-const { Sequelize, DataTypes, Model } = require('sequelize')
+const { Sequelize, DataTypes, Model, Op } = require('sequelize')
 const TokenGatedContentBuilder = require('../../database/models/tokengatedcontent')
 
 module.exports = class TokenGatedContent {
@@ -21,7 +21,7 @@ module.exports = class TokenGatedContent {
 		const errorResponse = this.errorResponse.bind(this)
 
 		app.get(
-			'/tokengatedcontents',
+			'/tokengatedcontents/read',
 			async function (req, res) {
 				safe(res, async () => {
 					const result = await this.TokenGatedContent.findAll({ logging: false })
@@ -31,8 +31,24 @@ module.exports = class TokenGatedContent {
 			}.bind(this),
 		)
 
+		app.post(
+			'/tokengatedcontent/create',
+			async function (req, res) {
+				safe(res, async () => {
+					checkDefined(req.body, 'tokenAddress')
+					checkDefined(req.body, 'tokenId')
+					checkDefined(req.body, 'balanceRequired')
+					checkDefined(req.body, 'contentRoute')
+					checkDefined(req.body, 'contentName')
+
+					const createdInstance = (await this.TokenGatedContent.create(req.body)).dataValues
+					res.status(200).send({ status: 'ok', createdInstance })
+				})
+			}.bind(this),
+		)
+
 		app.get(
-			'/tokengatedcontent',
+			'/tokengatedcontent/read',
 			async function (req, res) {
 				safe(res, async () => {
 					checkDefined(req.query, 'tokenAddress')
@@ -41,10 +57,25 @@ module.exports = class TokenGatedContent {
 
 					const result = await this.TokenGatedContent.findAll({
 						where: { tokenAddress, tokenId },
-						logging: false,
 					})
 
 					res.status(200).send(result)
+				})
+			}.bind(this),
+		)
+
+		app.delete(
+			'/tokengatedcontent/deletetest',
+			async function (req, res) {
+				safe(res, async () => {
+					const deletetestResult = await this.TokenGatedContent.destroy({
+						where: {
+							tokenAddress: {
+								[Op.like]: 'test',
+							},
+						},
+					})
+					res.status(200).send({ deletetestResult })
 				})
 			}.bind(this),
 		)

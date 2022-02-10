@@ -68,10 +68,7 @@ module.exports = class Endpoints {
 			'/bearertokenprovider',
 			async function (_req, res) {
 				safe(res, async () => {
-					console.log('Called bearertokenprovider')
 					const token = await getToken()
-
-					console.log({ token })
 					await res.status(200).send({ status: 'ok', token })
 				})
 			}.bind(this),
@@ -91,7 +88,6 @@ module.exports = class Endpoints {
 					const data = `Date: ${utcUnixTimestamp}\nAddress: ${address}\ntokenAddress: ${tokenAddress}\ntokenId: ${tokenId}\nI am the owner of ${address} and I want to check the token gated content for tokenAddress ${tokenAddress} and tokenId ${tokenId}`
 
 					const generatemessageFindAllResult = await this.TokenGatedContent.findAll({
-						logging: false,
 						where: { tokenAddress, tokenId },
 					})
 					if (generatemessageFindAllResult.length === 0) {
@@ -154,10 +150,7 @@ module.exports = class Endpoints {
 					}
 
 					const { tokenAddress, tokenId } = dataObject
-					const results = await this.TokenGatedContent.findAll({
-						logging: false,
-						where: { tokenAddress, tokenId },
-					})
+					const results = await this.TokenGatedContent.findAll({ where: { tokenAddress, tokenId } })
 					const tokenGatedContentRow = this.TokenGatedContent.build({ id: results[0].id })
 					await tokenGatedContentRow.reload()
 
@@ -173,10 +166,6 @@ module.exports = class Endpoints {
 						await erc1155.balanceOf(address, parseInt(dataObject.tokenId))
 					).toString()
 
-					console.log(JSON.stringify({ results }, null, 2))
-
-					console.log('Checking balance required')
-					console.log(`${balance} < ${tokenGatedContentRow.balanceRequired}`)
 					if (balance < tokenGatedContentRow.balanceRequired)
 						res.status(403).send({
 							status: 'nok',
@@ -207,7 +196,6 @@ module.exports = class Endpoints {
 	}
 
 	async errorResponse(res, message) {
-		console.log(message)
 		res.status(400).send({ status: 'nok', message })
 	}
 }
